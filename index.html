@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Stuff</title>
+	<link href="https://fonts.googleapis.com/css?family=Roboto+Condensed&text=STARTEXPECTEDUNPREPAR;ED" rel="stylesheet">
+	<style>
+		html, body {margin: 0; padding: 0; height: 100%; background: #111;}
+		body { display: flex; align-items: center; cursor: pointer;}
+	</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+let music = new Audio();
+music.src = "https://api.audiotool.com/track/expected_unprepared/play.ogg";
+music.crossOrigin = "anonymous";
+
+document.body.onclick = (e) => {
+	document.body.style.cursor = "auto";
+	if (music.paused)
+		music.play();
+	else  {
+		//music.currentTime = music.duration * (e.clientX/w);
+		music.pause();
+		document.body.style.cursor = "pointer";
+	}
+}
+
+let c = document.getElementById("c"), w, h;
+c.width = w = Math.max(1000, innerWidth);
+c.height = h = w / 6 * 2;
+let _ = c.getContext("2d");
+
+const cx = w/2;
+const cy = h/2;
+const unit = h/5;
+
+const palette = ["#D13F32", "#1D7872", "#DEDBA7", "#71B095", "#3F667D", "#BDBC85", "#6CBD6B", "#493F7D", "#B0886A", "#FCE98C", "#FC8CC6"];
+const palette2 = ["#3C5182", "#3F8299", "#3B8F7E", "#4C3F99", "#6D3B8F", "#8F3D65", "#8A4199"]
+
+let lead1 = [6,6,6,2,2,2,8,8,8,5,5,5,5,5,2,2,6,6,5,5,6,6,3,3,4,4,1,1,0,0,0,0,0,0,0,0];
+lead1.push(  6,6,6,2,2,2,9,9,9,5,5,6,6,2,2,9,9,9,8,8,8,6,6,6,6,6,6,3,3,3,3,3,3,3,3,3 );
+lead1.push.apply(lead1, Array(18).fill(6) );
+lead1.push.apply(lead1, Array(18).fill(7) );
+lead1.push.apply(lead1, Array(18).fill(6) );
+lead1.push.apply(lead1, Array(9).fill(5) );
+lead1.push(4,4,4,4,4,2,2,2,2);
+
+let lead2 = lead1.slice(0,72);
+lead2.push(  6,6,6,2,2,2,8,8,8,5,5,5,5,5,2,2,6,6,8,8,8,5,5,5,5,5,5,6,6,6,3,3,3,3,3,3);
+lead2.push(  2,2,2,0,0,0,4,4,4,6,6,6,6,6,5,5,5,5,3,3,3,4,4,4,4,4,4,5,5,5,9,9,9,9,9,9);
+
+let glass1 = [];
+glass1.push.apply(glass1, Array(9).fill(10) );
+glass1.push(4,4,6,6,6,6,6,6,6);
+glass1.push.apply(glass1, Array(9).fill(8) );
+glass1.push(2,2,3,3,0,0,0,0,0);
+glass1.push(7,7,7,7,7,7,7,9,9);
+glass1.push(3,3,3,5,5,5,5,5,5);
+glass1.push(6,6,6,8,8,8,8,8,8);
+glass1.push.apply(glass1, Array(9).fill(8) );
+glass1.push.apply(glass1, Array(9).fill(10) ); //2
+glass1.push(4,4,6,6,6,6,6,6,6);
+glass1.push.apply(glass1, Array(9).fill(11) );
+glass1.push(12,12,12,8,8,8,8,8,8);
+glass1.push(7,7,7,7,7,7,7,9,9);
+glass1.push(3,3,3,5,5,5,5,5,5);
+glass1.push(1,1,1,2,2,2,2,2,2);
+glass1.push.apply(glass1, Array(9).fill(2) );
+
+let bass = [2,2,2,2,2,2,2,3,3,4,4,4,4,4,4,4,3,3,2,2,2,2,2,2,2,2,2,1,1,0,0,0,0,0,0,0];
+bass.push.apply(bass, Array(9).fill(3));
+bass.push.apply(bass, Array(9).fill(2));
+bass.push.apply(bass, Array(9).fill(4));
+bass.push.apply(bass, Array(9).fill(0));
+
+let temp = 0;
+let temp2 = undefined;
+bass = bass.map( x => {
+	if (temp !== x) {
+		temp = x;
+		let n = Math.floor(Math.random() * palette2.length);
+		while (n == temp2)
+			 n = Math.floor(Math.random() * palette2.length);
+		return [x, temp2 = n]
+	} else {
+		return [x, temp2];
+	}
+});
+delete temp, temp2;
+
+function l() {
+	requestAnimationFrame(l);
+
+	_.fillStyle = "#1A212C";
+	_.fillRect(0,0, w, h);
+
+	// animation
+	let cT = music.currentTime + 0.05
+	,	cB = cT / 0.25
+	,	p0 = cT / 2.25 // bar count
+	,	p1 = (cT % 2.25)/2.25 //bar 0-1
+	,	p2 = cB - ~~cB // beat 0-1
+	,	p3 = ~~(cB % 9); //beat count 0-8
+
+
+
+	// bass
+	_.save();
+	if (p0 >= 64 && p0 < 104) {
+		let bassPos = cB - 9*64;
+		for(let i = Math.max(0, ~~bassPos-72) ; i < bassPos ; i++) {
+			_.fillStyle = palette2[bass[i%bass.length][1]];
+			_.fillRect(0, (4-bass[i%bass.length][0])*unit ,w , unit);
+		}
+	}
+	_.restore();
+
+	// pluck & lead
+	_.save();
+	_.translate(cx, cy);
+		if (p0 >= 32 && p0 < 48 || (p0 >= 64 && p0 < 103)) {
+			_.rotate(~~p0*Math.PI/2);
+		}
+	_.translate(-cx, -cy);
+
+	_.translate(cx - 1.5 * unit , cy - 1.5 * unit );
+	for (let i = 0; i < p3 + 1 ; i++) {
+		_.save();
+		_.translate(unit*(i%3), unit * ~~(i / 3));
+		
+		//pluck 
+		if (p0 < 32 || (p0 >= 48 && p0 < 64) ) {
+			_.fillStyle = i < 5 ? palette[~~(p0/2)*2%palette.length] : palette[(~~(p0/2)*2+1)%palette.length];
+				_.fillRect(1, 1, unit - 2, unit - 2);
+		} else if (p0 >= 32 && p0 < 48 || (p0 >= 64 && p0 < 103)) {
+			_.fillStyle = i < 5 ? palette[~~p0%palette.length] : i < 7? palette[(~~p0+1)%palette.length] : palette[(~~p0+2)%palette.length];
+				_.fillRect(1, 1, unit - 2, unit - 2);
+		}
+		
+		//lead
+		if (p0 >= 16 && p0 < 33 || (p0 >= 48 && p0 < 64)) {
+			_.fillStyle = p0 < 33? palette[lead1[(~~p0-16)*9+i]] : palette[lead2[(~~p0-48)*9+i]] ;
+			_.fillRect(1 + unit/2, 1, unit/2 - 2, unit - 2);
+		}
+
+		_.restore();
+	}
+	_.restore();
+
+	// glass
+	_.save();
+	if (p0 >= 32 && p0 < 48 || (p0 >= 64 && p0 < 96)) {
+		let glassPos = p0 < 48? cB - 9*32 : (cB - 9*64) ;
+
+		_.lineWidth = unit/2;
+		for (let i = Math.max(0, ~~glassPos-18); i < ~~glassPos; i++) {
+			_.beginPath();
+				_.strokeStyle = palette[glass1[i%144]%palette.length]
+				_.arc(cx, cy, unit*2, i*Math.PI/9, (i+1)*Math.PI/9 + 0.01);
+			_.stroke();
+		}
+
+		let n = ~~glassPos;
+		let nn = glassPos - n;
+		_.beginPath();
+			_.strokeStyle = palette[glass1[n%144]%palette.length]
+			_.arc(cx, cy, unit*2, n*Math.PI/9, (n+nn)*Math.PI/9 + 0.01);
+		_.stroke();
+
+	
+	}
+	_.restore();
+
+	if (music.paused) {
+		_.fillStyle = "black";
+		_.fillRect(0,0, w, h);
+		_.font = "80px 'Roboto Condensed'";
+		let startText = _.measureText("EXPECTED;UNPREPARED");
+		_.fillStyle = "#ddd";
+		_.fillText("EXPECTED;UNPREPARED", cx - startText.width/2, cy);
+	}
+	
+}
+l();
+
+</script>
+</body>
+</html>
